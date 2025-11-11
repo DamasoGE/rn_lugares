@@ -4,14 +4,24 @@ import ItemLugar from "./components/ItemLugar";
 import { useEffect, useState } from "react";
 import { globalStyles } from "./styles/GlobalStyles";
 import Fab from "./components/Fab";
-import { borrarLugar, cargarLugares, crearNuevoLugar, modificarLugar } from "./utils/CrudLugares";
+import {
+  borrarLugar,
+  buscarLugares,
+  cargarLugares,
+  crearNuevoLugar,
+  modificarLugar,
+} from "./utils/CrudLugares";
 import DetalleLugar from "./components/DetalleLugar";
 import EditorLugar from "./components/EditorLugar";
-const R = require('ramda');
+import BuscadorSencillo from "./components/BuscadorSencillo";
+import BuscadorSugerencias from "./components/BuscadorSugerencias";
+const R = require("ramda");
 
 export default function App() {
   const [listaLugares, setListaLugares] = useState<Lugares>([]);
-  const [lugarSeleccionado, setLugarSeleccionado] = useState<Lugar | undefined>(undefined)
+  const [lugarSeleccionado, setLugarSeleccionado] = useState<Lugar | undefined>(
+    undefined
+  );
   const [modalEditarVisible, setModalEditarVisible] = useState<boolean>(false);
 
   useEffect(() => {
@@ -36,7 +46,7 @@ export default function App() {
   }
 
   function accionAbrirDetalleLugar(lugar: Lugar) {
-    setLugarSeleccionado(lugar)
+    setLugarSeleccionado(lugar);
   }
 
   function accionCerrarDetalleLugar() {
@@ -48,44 +58,43 @@ export default function App() {
   }
 
   function accionCerrarEditorLugar() {
-      setModalEditarVisible(false);
+    setModalEditarVisible(false);
   }
-
 
   function accionCrearNuevoLugar(datos: DatosFormulario) {
     crearNuevoLugar(datos)
-    .then(nuevoLugar => {
-      setModalEditarVisible(false)
-      const nuevaLista = R.append(nuevoLugar, listaLugares);
-      setListaLugares(nuevaLista);
-    })
-    .catch( error => mostrarError(error.toString()))
+      .then((nuevoLugar) => {
+        setModalEditarVisible(false);
+        const nuevaLista = R.append(nuevoLugar, listaLugares);
+        setListaLugares(nuevaLista);
+      })
+      .catch((error) => mostrarError(error.toString()));
   }
 
   function accionModificarLugar(datos: DatosFormulario) {
-    if(lugarSeleccionado!==undefined){
+    if (lugarSeleccionado !== undefined) {
       modificarLugar(lugarSeleccionado.id, datos)
-      .then( lugarModificado => {
-        setLugarSeleccionado(lugarModificado);
-        const nuevaLista = listaLugares.map(
-          lugar => lugar.id===lugarModificado.id? lugarModificado : lugar
-        )
-        setListaLugares(nuevaLista);
-        setModalEditarVisible(false);
-      })
-      .catch(error => mostrarError(error.toString()))
+        .then((lugarModificado) => {
+          setLugarSeleccionado(lugarModificado);
+          const nuevaLista = listaLugares.map((lugar) =>
+            lugar.id === lugarModificado.id ? lugarModificado : lugar
+          );
+          setListaLugares(nuevaLista);
+          setModalEditarVisible(false);
+        })
+        .catch((error) => mostrarError(error.toString()));
     }
   }
 
-  function realizaBorrado(){
-    if(lugarSeleccionado!==undefined){
+  function realizaBorrado() {
+    if (lugarSeleccionado !== undefined) {
       borrarLugar(lugarSeleccionado)
-      .then(()=> {
-        const nuevaLista = R.without([lugarSeleccionado], listaLugares)
-        setListaLugares(nuevaLista);
-        setLugarSeleccionado(undefined);
-      })
-      .catch(error => mostrarError(error.toString()))
+        .then(() => {
+          const nuevaLista = R.without([lugarSeleccionado], listaLugares);
+          setListaLugares(nuevaLista);
+          setLugarSeleccionado(undefined);
+        })
+        .catch((error) => mostrarError(error.toString()));
     }
   }
 
@@ -94,10 +103,10 @@ export default function App() {
       `Desea borrar ${lugarSeleccionado?.nombre}`,
       "Un lugar eliminado no podrá ser recuperado",
       [
-        {text: "Sí, eliminar", onPress: realizaBorrado },
-        {text: "No, cancelar"}
+        { text: "Sí, eliminar", onPress: realizaBorrado },
+        { text: "No, cancelar" },
       ]
-    )
+    );
   }
 
   function mostrarError(mensaje: string) {
@@ -107,11 +116,15 @@ export default function App() {
   return (
     <View style={styles.contenedor}>
       <Text style={styles.titulo}>Lugares del mundo</Text>
-      <FlatList
-        data={listaLugares}
-        keyExtractor={(lugar) =>  lugar.id.toString()}
-        renderItem={({ item }) => getItemLugar(item)}
-      />
+      <BuscadorSugerencias setLugarSeleccionado={setLugarSeleccionado} />
+      <View style={{marginTop: 60}}>
+        <FlatList
+          data={listaLugares}
+          keyExtractor={(lugar) => lugar.id.toString()}
+          renderItem={({ item }) => getItemLugar(item)}
+        />
+      </View>
+
       <View style={styles.posicionFab}>
         <Fab
           icono={"add"}
@@ -120,30 +133,30 @@ export default function App() {
         />
       </View>
 
-      {
-        lugarSeleccionado !== undefined && (
-          <Modal transparent={false} animationType={"slide"} >
-            <DetalleLugar
+      {lugarSeleccionado !== undefined && (
+        <Modal transparent={false} animationType={"slide"}>
+          <DetalleLugar
             lugarSeleccionado={lugarSeleccionado}
             accionAbrirEditorLugar={accionAbrirEditorLugar}
             accionBorrarLugar={accionBorrarLugar}
-            salirPulsado={accionCerrarDetalleLugar} />
-          </Modal>
-        )
-      }
+            salirPulsado={accionCerrarDetalleLugar}
+          />
+        </Modal>
+      )}
 
-      {
-          modalEditarVisible && (
-            <Modal transparent={false} animationType={"slide"}>
-              <EditorLugar
-              lugarSeleccionado = {lugarSeleccionado}
-              aceptarPulsado={lugarSeleccionado===undefined ?
-                accionCrearNuevoLugar : accionModificarLugar}
-              accionCerrarEditorLugar={accionCerrarEditorLugar}
-              />
-            </Modal>
-          )
-      }
+      {modalEditarVisible && (
+        <Modal transparent={false} animationType={"slide"}>
+          <EditorLugar
+            lugarSeleccionado={lugarSeleccionado}
+            aceptarPulsado={
+              lugarSeleccionado === undefined
+                ? accionCrearNuevoLugar
+                : accionModificarLugar
+            }
+            accionCerrarEditorLugar={accionCerrarEditorLugar}
+          />
+        </Modal>
+      )}
     </View>
   );
 }

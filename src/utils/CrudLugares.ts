@@ -45,3 +45,10 @@ export async function borrarLugar(lugar: Lugar){
     const url=`http://${IP}:3000/lugares/${lugar.id}`;
     await axios.delete(url);
 }
+
+export async function buscarLugares(texto: string): Promise<Lugares>{
+    const url=`http://${IP}:3000/lugares?nombre=${texto}`;
+    const respuesta = await axios.get(url);
+    console.log(`[${new Date().toLocaleTimeString()}]`, respuesta.data);
+    return respuesta.data;
+}
